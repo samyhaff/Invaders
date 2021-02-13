@@ -20,12 +20,19 @@ int main(int argc, char **argv) {
     initscr();
     cbreak();
     noecho();
+    curs_set(0);
     keypad(stdscr, TRUE);
     scrollok(stdscr, TRUE);
     nodelay(stdscr, TRUE);
 
     while (true) {
-        mvprintw(player.position_y, player.position_x, player.sprite);
+        int ch = getch();
+        if (ch == KEY_LEFT)
+            player.position_x -= 1;
+        else if (ch == KEY_RIGHT)
+            player.position_x += 1;
+        clear();
+        mvprintw(player.position_y, player.position_x - 2, player.sprite);
         refresh(); 
     }
     
