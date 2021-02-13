@@ -8,6 +8,7 @@
 #define HEIGHT 24
 #define FPS 50
 #define MISSILE_FREQ 200
+#define INVADERS_FREQ 1000
 
 bool playing = true;
 int counter = 0;
@@ -22,6 +23,14 @@ struct player {
     char *sprite;
     char *missile_sprite;
 } player = {WIDTH / 2, HEIGHT - 2, 3, false, 0, 0, "|-^-|", "|"};
+
+struct enemy {
+    int position_x;
+    int position_y;
+    char *sprite;
+}  enemies = {WIDTH / 2, 0, "/O\\"};
+
+/* int nbOfEnemies = sizeof(enemies) / sizeof(*enemies); */
 
 void getAndRunInput() {
     int ch = getch();
@@ -66,6 +75,9 @@ void draw_screen() {
     // draw missile
     if (player.fired)
         mvprintw(player.missile_y, player.missile_x, player.missile_sprite);
+
+    // draw enemies
+    mvprintw(enemies.position_y, enemies.position_x, enemies.sprite);
 
     refresh(); 
 }
