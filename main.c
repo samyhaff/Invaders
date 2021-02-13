@@ -8,13 +8,15 @@
 #define HEIGHT 24
 #define FPS 50
 #define MISSILE_FREQ 200
-#define INVADERS_FREQ 1000
+#define INVADERS_FREQ 300
 #define NB_INVADERS 36
 
 enum etat {ALIVE, DYING, DEAD};
 
 bool playing = true;
-int counter = 0;
+int counter_missile = 0;
+int counter_invader = 0;
+bool going_left = true;
 
 struct player {
     int position_x;
@@ -69,14 +71,65 @@ void getAndRunInput() {
     }
 }
 
-void update_missile() {
+void updateMissile() {
     if (player.fired) {
-        if (counter == 0)
+        if (counter_missile == 0)
             player.missile_y -= 1;
         if (player.missile_y == 0)
             player.fired = false;
-        counter = (counter + 1) % MISSILE_FREQ;
+        counter_missile = (counter_missile + 1) % MISSILE_FREQ;
     }
+}
+
+int getMinInvaderX() {
+    int min = WIDTH;
+    for (int i = 0; i < NB_INVADERS; i++) {
+        if ((invaders[i].position_x < min) && (invaders[i].state == ALIVE))
+            min = invaders[i].position_x;
+    }
+    return min;
+}
+
+int getMaxInvaderX() {
+    int max = -1;
+    for (int i = 0; i < NB_INVADERS; i++) {
+        if ((invaders[i].position_x > max) && (invaders[i].state == ALIVE))
+            max = invaders[i].position_x;
+    }
+    return max;
+}
+
+void moveInvaders(int x, int y) {
+    for (int i = 0; i < NB_INVADERS; i++) {
+        invaders[i].position_x += x;
+        invaders[i].position_y += y;
+    }
+}
+
+void updateInvaders() {
+    if (counter_invader == 0) {
+        int min = getMinInvaderX();
+        int max = getMaxInvaderX();
+        if (going_left) {
+            if (min == 0) {
+                going_left = false;
+                moveInvaders(0, 1);
+            }
+            else {
+                moveInvaders(-1, 0);
+            }
+        }
+        else {
+            if (max == WIDTH - 3) {
+                going_left = true;
+                moveInvaders(0, 1);
+            }
+            else {
+                moveInvaders(1, 0);
+            }
+        }
+    }
+    counter_invader = (counter_invader + 1) % INVADERS_FREQ;
 }
 
 void draw_screen() {
@@ -110,7 +163,8 @@ int main(int argc, char **argv) {
     while (playing) {
         clock_t begin = clock();
         getAndRunInput();
-        update_missile();
+        updateMissile();
+        updateInvaders();
         draw_screen();
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC; 
