@@ -7,7 +7,7 @@
 #define WIDTH 80
 #define HEIGHT 24
 #define FPS 60
-#define MISSILE_DELAY 250
+#define MISSILE_DELAY 300
 #define INVADERS_DELAY 500
 #define NB_INVADERS 36
 
@@ -35,6 +35,10 @@ struct invader {
     char *sprite;
     int state;
     int score;
+    int fired;
+    int missile_x;
+    int missile_y;
+    int counter_missile;
 } invaders[36];
 
 void spawnInvaders() {
@@ -44,6 +48,10 @@ void spawnInvaders() {
         invaders[i].sprite = "/O\\";
         invaders[i].state = ALIVE;
         invaders[i].score = 5;
+        invaders[i].fired = false;
+        invaders[i].missile_x = 0;
+        invaders[i].missile_y = 0;
+        invaders[i].counter_missile = 0;
     }
 }
 
@@ -153,6 +161,30 @@ void updateInvaders() {
     counter_invader = (counter_invader + 1) % INVADERS_DELAY;
 }
 
+void invadersAttack() {
+    int r;
+    for (int i = 0; i < NB_INVADERS; i++) {
+        r = rand(); 
+        if ((r < (int) (0.000001 * RAND_MAX)) && (invaders[i].state == ALIVE) && !(invaders[i].fired)) {
+            invaders[i].fired = true;
+            invaders[i].missile_x = invaders[i].position_x;
+            invaders[i].missile_y = invaders[i].position_y;
+        }
+    }
+}
+
+void updateInvaderMissile() {
+    for (int i = 0; i < NB_INVADERS; i++) {
+        if (invaders[i].fired) {
+           if (invaders[i].missile_y == player.position_y + 1) 
+               invaders[i].fired = false;
+           if (invaders[i].counter_missile == 0)
+               invaders[i].missile_y += 1;
+        }
+        invaders[i].counter_missile = (invaders[i].counter_missile + 1) % MISSILE_DELAY;
+    }
+}
+
 void gameOver() {
     int count_alive = 0;
     for (int i = 0; i < NB_INVADERS; i++) {
@@ -161,6 +193,10 @@ void gameOver() {
     }
     if ((count_alive == 0) || (getMaxInvaderY() == player.position_y))
         playing = false;
+    for (int i = 0; i < NB_INVADERS; i++) {
+        if ((invaders[i].missile_y == player.position_y) && (invaders[i].position_x >= player.position_x) && (invaders[i].position_x <= player.position_x + 2))
+            playing = false;
+    }
 }
 
 void draw_screen() {
@@ -175,9 +211,16 @@ void draw_screen() {
     for (int i = 0; i < NB_INVADERS; i++)
         if (invaders[i].state == ALIVE) 
             mvprintw(invaders[i].position_y, invaders[i].position_x, invaders[i].sprite);
+
+    // draw invaders missiles
+    for (int i = 0; i < NB_INVADERS; i++)
+        if (invaders[i].fired)
+            mvprintw(invaders[i].missile_y, invaders[i].missile_x, "|");
 }
 
 int main(int argc, char **argv) {
+    srand(time(NULL));
+
     initscr();
     cbreak();
     noecho();
@@ -193,6 +236,8 @@ int main(int argc, char **argv) {
         getAndRunInput();
         updateMissile();
         updateInvaders();
+        invadersAttack();
+        updateInvaderMissile();
         gameOver();
         erase();
         draw_screen();
