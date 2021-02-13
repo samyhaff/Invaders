@@ -1,3 +1,8 @@
+/* 
+ BUG missile fonctionnel que si counter_invader == 0
+ BUG missile traverse des couches
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ncurses.h>
@@ -7,8 +12,8 @@
 #define WIDTH 80
 #define HEIGHT 24
 #define FPS 50
-#define MISSILE_FREQ 200
-#define INVADERS_FREQ 300
+#define MISSILE_FREQ 250
+#define INVADERS_FREQ 500
 #define NB_INVADERS 36
 
 enum etat {ALIVE, DYING, DEAD};
@@ -71,12 +76,24 @@ void getAndRunInput() {
     }
 }
 
+bool hit() {
+    for (int i = NB_INVADERS - 1; i >= 0; i--) {
+        if ((invaders[i].state == ALIVE) && (invaders[i].position_x == player.missile_x) && (invaders[i].position_y == player.missile_y)) {
+            invaders[i].state = DYING;
+            return true;
+        }
+    }
+    return false;
+}
+
 void updateMissile() {
     if (player.fired) {
         if (counter_missile == 0)
             player.missile_y -= 1;
         if (player.missile_y == 0)
             player.fired = false;
+       if (hit())
+           player.fired = false;
         counter_missile = (counter_missile + 1) % MISSILE_FREQ;
     }
 }
@@ -144,7 +161,8 @@ void draw_screen() {
 
     // draw invaders
     for (int i = 0; i < NB_INVADERS; i++)
-        mvprintw(invaders[i].position_y, invaders[i].position_x, invaders[i].sprite);
+        if (invaders[i].state == ALIVE) 
+            mvprintw(invaders[i].position_y, invaders[i].position_x, invaders[i].sprite);
 
     refresh(); 
 }
