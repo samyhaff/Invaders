@@ -11,9 +11,9 @@
 
 #define WIDTH 80
 #define HEIGHT 24
-#define FPS 50
-#define MISSILE_FREQ 250
-#define INVADERS_FREQ 500
+#define FPS 60
+#define MISSILE_DELAY 250
+#define INVADERS_DELAY 500
 #define NB_INVADERS 36
 
 enum etat {ALIVE, DYING, DEAD};
@@ -78,7 +78,7 @@ void getAndRunInput() {
 
 bool hit() {
     for (int i = NB_INVADERS - 1; i >= 0; i--) {
-        if ((invaders[i].state == ALIVE) && (invaders[i].position_x == player.missile_x) && (invaders[i].position_y == player.missile_y)) {
+        if ((invaders[i].state == ALIVE) && (invaders[i].position_x <= player.missile_x) && (invaders[i].position_y == player.missile_y) && (player.missile_x <= invaders[i].position_x + 2)) {
             invaders[i].state = DYING;
             return true;
         }
@@ -94,7 +94,7 @@ void updateMissile() {
             player.fired = false;
        if (hit())
            player.fired = false;
-        counter_missile = (counter_missile + 1) % MISSILE_FREQ;
+        counter_missile = (counter_missile + 1) % MISSILE_DELAY;
     }
 }
 
@@ -146,12 +146,10 @@ void updateInvaders() {
             }
         }
     }
-    counter_invader = (counter_invader + 1) % INVADERS_FREQ;
+    counter_invader = (counter_invader + 1) % INVADERS_DELAY;
 }
 
 void draw_screen() {
-    clear();
-
     // draw player
     mvprintw(player.position_y, player.position_x - 2, player.sprite);
 
@@ -163,8 +161,6 @@ void draw_screen() {
     for (int i = 0; i < NB_INVADERS; i++)
         if (invaders[i].state == ALIVE) 
             mvprintw(invaders[i].position_y, invaders[i].position_x, invaders[i].sprite);
-
-    refresh(); 
 }
 
 int main(int argc, char **argv) {
@@ -183,9 +179,11 @@ int main(int argc, char **argv) {
         getAndRunInput();
         updateMissile();
         updateInvaders();
+        erase();
         draw_screen();
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC; 
+        refresh();
         sleep((1 / (double) FPS) - time_spent);
     }
     
