@@ -1,8 +1,3 @@
-/* 
- BUG missile fonctionnel que si counter_invader == 0
- BUG missile traverse des couches
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ncurses.h>
@@ -107,6 +102,15 @@ int getMinInvaderX() {
     return min;
 }
 
+int getMaxInvaderY() {
+    int max = 0;
+    for (int i = 0; i < NB_INVADERS; i++) {
+        if ((invaders[i].position_y > max) && (invaders[i].state == ALIVE))
+            max = invaders[i].position_y;
+    }
+    return max;
+}
+
 int getMaxInvaderX() {
     int max = -1;
     for (int i = 0; i < NB_INVADERS; i++) {
@@ -149,6 +153,16 @@ void updateInvaders() {
     counter_invader = (counter_invader + 1) % INVADERS_DELAY;
 }
 
+void gameOver() {
+    int count_alive = 0;
+    for (int i = 0; i < NB_INVADERS; i++) {
+        if (invaders[i].state == ALIVE) 
+            count_alive += 1;
+    }
+    if ((count_alive == 0) || (getMaxInvaderY() == player.position_y))
+        playing = false;
+}
+
 void draw_screen() {
     // draw player
     mvprintw(player.position_y, player.position_x - 2, player.sprite);
@@ -179,6 +193,7 @@ int main(int argc, char **argv) {
         getAndRunInput();
         updateMissile();
         updateInvaders();
+        gameOver();
         erase();
         draw_screen();
         clock_t end = clock();
