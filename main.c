@@ -9,6 +9,9 @@
 #define FPS 50
 #define MISSILE_FREQ 200
 #define INVADERS_FREQ 1000
+#define NB_INVADERS 36
+
+enum etat {ALIVE, DYING, DEAD};
 
 bool playing = true;
 int counter = 0;
@@ -24,13 +27,23 @@ struct player {
     char *missile_sprite;
 } player = {WIDTH / 2, HEIGHT - 2, 3, false, 0, 0, "|-^-|", "|"};
 
-struct enemy {
+struct invader {
     int position_x;
     int position_y;
     char *sprite;
-}  enemies = {WIDTH / 2, 0, "/O\\"};
+    int state;
+    int score;
+} invaders[36];
 
-/* int nbOfEnemies = sizeof(enemies) / sizeof(*enemies); */
+void spawnInvaders() {
+    for (int i = 0; i < 36; i++) {
+        invaders[i].position_x = (WIDTH / 2) - 7 + ((3 * i) % 18);   
+        invaders[i].position_y = 2 + (i / 6);   
+        invaders[i].sprite = "/O\\";
+        invaders[i].state = ALIVE;
+        invaders[i].score = 5;
+    }
+}
 
 void getAndRunInput() {
     int ch = getch();
@@ -76,8 +89,9 @@ void draw_screen() {
     if (player.fired)
         mvprintw(player.missile_y, player.missile_x, player.missile_sprite);
 
-    // draw enemies
-    mvprintw(enemies.position_y, enemies.position_x, enemies.sprite);
+    // draw invaders
+    for (int i = 0; i < NB_INVADERS; i++)
+        mvprintw(invaders[i].position_y, invaders[i].position_x, invaders[i].sprite);
 
     refresh(); 
 }
@@ -90,6 +104,8 @@ int main(int argc, char **argv) {
     keypad(stdscr, TRUE);
     scrollok(stdscr, TRUE);
     nodelay(stdscr, TRUE);
+
+    spawnInvaders();
 
     while (playing) {
         clock_t begin = clock();
